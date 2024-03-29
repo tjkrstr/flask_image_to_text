@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Upload</title>
+    
+</head>
+<body>
+    <h1>File Upload</h1>
+
+    <h2>Uploaded Files</h2>
+    <ul>
+        {% for file in uploaded_files %}
+        <li>
+            <label>
+                <input type="checkbox" name="selected_files" value="{{ file }}" style="display: none;">
+                {{ file }}
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload') }}">
+        <h2>Upload Files</h2>
+        <input type="file" name="files" multiple>
+        <button type="submit">Upload</button>
+        <button type="button" onclick="processFiles()">Process</button>
+    </form>
+
+    <form method="GET" action="{{ url_for('download_output') }}" name="download-form">
+        <h2>Download All Files</h2>
+        <a href="{{ url_for('download_output') }}" class="download-link">
+            <button type="button">Download Files</button>
+        </a>
+    </form>
+
+    <h2>Output Files</h2>
+    <ul>
+        {% for file in processed_files %}
+        <li>
+            <label>
+                <input type="checkbox" name="selected_files" value="{{ file }}" style="display: none;">
+                {{ file }}
+            </label>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        function processFiles() {
+            // Trigger /upload endpoint
+            fetch('/process', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error processing files');
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>

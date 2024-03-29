@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# Get host from command line argument, set to localhost if not provided.
+HOST=${1:-localhost}
+
+PORT=5000
+
+TEST_DIR="./test_files"
+
+print_yellow() {
+    local YELLOW='\033[1;33m'
+    local NO_COLOR='\033[0m'
+    local LINE="====================="
+
+    echo -e "${YELLOW}${LINE}"
+    echo -e "$1"
+    echo -e "${LINE}${NO_COLOR}"
+}
+
+upload_files() {
+    local url="http://$HOST:$PORT/upload"
+    
+    # Iterate over all arguments (filenames) passed to the function
+    for filename in "$@"; do
+        # Check if the file exists
+        if [ ! -f "$filename" ]; then
+            echo "File '$filename' does not exist. Skipping."
+            continue
+        fi
+        
+        # Upload the file
+        echo "Uploading file: $filename"
+        curl -X POST -F "files=@${filename}" "${url}"
+    done
+}
+
+# Clean output folder
+rm -rf ./downloads
+mkdir -p ./downloads
+
+print_yellow "Updating file database"
+curl http://$HOST:$PORT/
+
+print_yellow "Testing processing if no files are present"
+curl -X POST http://$HOST:$PORT/process
+
+print_yellow "Testing upload of valid file"
+upload_files "$TEST_DIR/jpegtest.jpg"
+
+#pdf files cannot be uploaded
+print_yellow "Testing upload of invalid file type"
+upload_files "$TEST_DIR/test_image_file.pdf"
+
+#actual file type is .ods and not .jpg
+print_yellow "Testing upload of invalid file type"
+upload_files "$TEST_DIR/test_ods.jpg"
+
+print_yellow "Testing upload of invalid file extension"
+upload_files "$TEST_DIR/pngtest2.png.jpg"
+
+print_yellow "Testing upload of invalid file extension"
+upload_files "$TEST_DIR/b"
+
+print_yellow "Testing upload file with different name but same checksum as existing file"
+upload_files "$TEST_DIR/jpegtestv2.jpg"
+
+print_yellow "Testing upload file with same name but different checksum as existing file"
+upload_files "$TEST_DIR/files_similar_name/jpegtest.jpg"
+
+print_yellow "Testing upload of multiple valid files"
+upload_files "$TEST_DIR/pngtest.png" "$TEST_DIR/pngtest2.png"
+
+# Wait for files to be processed
+sleep 30
+
+print_yellow "Updating file database"
+curl http://$HOST:$PORT/
+
+print_yellow "Testing processing of already processed files"
+curl -X POST http://$HOST:$PORT/process
+
+print_yellow "Download processed files"
+curl -o ./downloads/test_output.zip http://$HOST:$PORT/download_output
+
+# Print content of zip file
+print_yellow "Test if content of downloaded .zip file is correct"
+cd ./downloads; unzip ./test_output.zip; sha256sum ./*; echo "checksums.txt:"; cat checksums.txt

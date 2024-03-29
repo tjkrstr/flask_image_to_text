@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - "5000:5000"
+    network_mode: "host"
+    # volumes:
+      # - ./output:/app/app_folder/output
+      # - ./downloads:/app/app_folder/downloads

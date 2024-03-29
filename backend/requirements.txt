@@ -1,0 +1,8 @@
+Flask==2.2.5
+blake3==0.3.4
+PyMuPDF==1.21.1
+python-magic==0.4.27
+Werkzeug==2.2.3
+Pillow==9.0.1
+pytesseract==0.3.10
+Flask-Cors==4.0.0
